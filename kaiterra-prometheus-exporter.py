@@ -3,6 +3,7 @@
 
 import argparse
 import requests
+import aqi
 from flask import Flask, Response, request
 
 app = Flask(__name__)
@@ -72,6 +73,15 @@ def metrics():
                                                 description=metric['description'],
                                                 value=device_readings[metric['field']]))
 
+    # compute and add aqi
+    aqi_value = aqi.to_aqi([
+        (aqi.POLLUTANT_PM25, device_readings['rpm25c']),
+        (aqi.POLLUTANT_PM10, device_readings['rpm10c'])
+    ])
+    responses.append(RESPONSE_FORMAT.format(metric='%s_aqi' % (METRIC_PREFIX),
+                                            description='US Air Quality Index',
+                                            value=aqi_value))
+    
     return Response('\n'.join(responses), mimetype='text/plain')
 
 if __name__ == '__main__':
